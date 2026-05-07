@@ -76,3 +76,18 @@ The differentiator is not writing code, it's knowing what to ask and recognizing
 - [ ] MCP pricing for Signavio: study Anthropic, Salesforce Einstein, SAP Joule pricing models
 - [ ] Behavioral: unblock internal stalled situation (2 STAR stories ready)
 - [ ] Behavioral: brilliant but socially destructive colleague
+
+---
+
+## Future Roadmap — Eldoreth Process Intelligence Suite
+
+Unify all 4 tools under a single web app:
+- Single UI with sidebar navigation (Generator | Inspector | Insights | Use Cases)  
+- Shared state: generate log once, use everywhere without re-upload
+- Consistent Eldoreth branding
+- Deploy on eldoreth.com (not lovable.app)
+- Target: after SAP Munich onboarding, repackage for DataLane presales use
+
+Tech stack options:
+- Lovable for rapid UI (connect to eldoreth-pm FastAPI backend)
+- Or React + Tailwind built with Claude Code for full control
