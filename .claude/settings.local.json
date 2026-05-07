@@ -19,7 +19,12 @@
       "Bash(grep -v '^\\\\s*$')",
       "Bash(PATH=__TRACKED_VAR__/.local/bin:__TRACKED_VAR__ PYTHONPATH=src pytest tests/interview_prep/test_discovery.py -v)",
       "Bash(PATH=__TRACKED_VAR__/.local/bin:__TRACKED_VAR__ PYTHONPATH=src pytest tests/interview_prep/test_api.py -v)",
-      "Bash(PATH=__TRACKED_VAR__/.local/bin:__TRACKED_VAR__ PYTHONPATH=src pytest -v --tb=short)"
+      "Bash(PATH=__TRACKED_VAR__/.local/bin:__TRACKED_VAR__ PYTHONPATH=src pytest -v --tb=short)",
+      "Skill(claude-api)",
+      "Bash(pip show *)",
+      "Bash(sed -i 's|router.py       # /discover, /variants, /bottlenecks endpoints|router.py       # /discover, /variants, /bottlenecks, /insights endpoints|' /home/nicola/interview-prep/README.md)",
+      "Bash(sed -i 's|│   └── __init__.py$|│   └── __init__.py     # InsightReport response model|' /home/nicola/interview-prep/README.md)",
+      "Bash(PYTHONPATH=/home/nicola/interview-prep/src python3 -m pytest tests/interview_prep/test_api.py -v)"
     ]
   }
 }

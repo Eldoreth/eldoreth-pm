@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import textwrap
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -235,3 +237,84 @@ class TestApp:
             headers={"Origin": "http://localhost:3000"},
         )
         assert r.headers.get("access-control-allow-origin") == "*"
+
+
+# ---------------------------------------------------------------------------
+# POST /api/v1/insights
+# ---------------------------------------------------------------------------
+
+_VALID_INSIGHT_JSON = json.dumps({
+    "executive_summary": "The process demonstrates moderate efficiency with clear bottlenecks.",
+    "top_findings": [
+        "Approve Order accounts for 65% of total cycle time.",
+        "Only one trace variant exists, indicating a rigid process.",
+        "Rework rate is 0% across all activities.",
+    ],
+    "recommended_actions": [
+        "Automate the Approve Order step to reduce wait time.",
+        "Introduce parallel processing for independent activities.",
+        "Add SLA monitoring at the Approve Order activity.",
+    ],
+    "estimated_value": "Automation of the approval step could reduce lead time by 30-40%.",
+})
+
+
+def _make_mock_anthropic_client(text: str) -> MagicMock:
+    """Return a mocked Anthropic client whose messages.create returns *text*."""
+    text_block = MagicMock()
+    text_block.type = "text"
+    text_block.text = text
+
+    response = MagicMock()
+    response.content = [text_block]
+
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = response
+    return mock_client
+
+
+class TestInsights:
+    def test_happy_path(
+        self, client: TestClient, csv_bytes: bytes, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        with patch("interview_prep.api.router.anthropic.Anthropic") as mock_cls:
+            mock_cls.return_value = _make_mock_anthropic_client(_VALID_INSIGHT_JSON)
+            r = client.post("/api/v1/insights", files=_csv_file(csv_bytes))
+
+        assert r.status_code == 200
+        body = r.json()
+        assert set(body) == {
+            "executive_summary",
+            "top_findings",
+            "recommended_actions",
+            "estimated_value",
+        }
+        assert isinstance(body["top_findings"], list)
+        assert 3 <= len(body["top_findings"]) <= 5
+        assert isinstance(body["recommended_actions"], list)
+        assert len(body["recommended_actions"]) == 3
+        assert isinstance(body["executive_summary"], str)
+        assert isinstance(body["estimated_value"], str)
+
+    def test_missing_api_key_returns_503(
+        self, client: TestClient, csv_bytes: bytes, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        r = client.post("/api/v1/insights", files=_csv_file(csv_bytes))
+
+        assert r.status_code == 503
+        assert "ANTHROPIC_API_KEY" in r.json()["detail"]
+
+    def test_malformed_ai_response_returns_500(
+        self, client: TestClient, csv_bytes: bytes, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        with patch("interview_prep.api.router.anthropic.Anthropic") as mock_cls:
+            mock_cls.return_value = _make_mock_anthropic_client(
+                "Sorry, I cannot provide that analysis."
+            )
+            r = client.post("/api/v1/insights", files=_csv_file(csv_bytes))
+
+        assert r.status_code == 500
+        assert "Failed to parse AI response" in r.json()["detail"]
