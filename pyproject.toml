@@ -2,6 +2,9 @@
 requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.backends.legacy:build"
 
+[tool.uv.extra-build-dependencies]
+interview-prep = ["setuptools>=69"]
+
 [project]
 name = "interview-prep"
 version = "0.1.0"
